@@ -236,8 +236,6 @@ def data_ec(E,p,n):
             print "Mu-invariant: " + str(mu_inv(poly,p))
             print
     elif E.is_supersingular(p):
-        #print "Lambda-invariant of the polynomial: " + str(lambda_inv(poly,p))
-        #print
         if (n + 1) % 2 == 0:
             print "Lambda^+: " + str(lambda_inv_ss(poly,p,n))
             print "Mu^+: " + str(mu_inv(poly,p))
