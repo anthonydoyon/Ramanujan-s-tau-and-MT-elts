@@ -1,6 +1,7 @@
-︠a75283db-4161-4bf4-9572-41fde381db73s︠
+︠a75283db-4161-4bf4-9572-41fde381db73︠
 #Code for computing Iwasawa-invariants of Mazur-Tate elements and potential reduction of elliptic curves over Q
 #By Anthony Doyon and Antonio Lei
+#Linked article: Congruences between Ramanujan's tau function and elliptic curves, and Mazur-Tate elements at additive primes
 
 #Some interesting remarks concerning the following code:
 #For further theoretical discussions about p-adic Mazur-Tate elements, we suggest the reader to consult Pollack and Weston's 2009 article named
@@ -20,7 +21,7 @@ def mt_ec(E,p,n):
     0 < b < p^(n+1) is an integer used to represent the permutation sigma_b in G_n+1 := Gal(Q(mu_p^(n+1))/Q) which acts as follows on a primitive
     p^(n+1)th root of unity zeta : sigma_b(zeta) = zeta^b. Coeff_b is the coefficient associated to the permutation represented by b i.e.
     phi([oo] - [b/p^(n+1)])|(X,Y)=(0,1) where phi is the modular symbol associated to E. theta_n in Z[G_n+1] is simply the sum of all coeff_b * sigma_b
-    for all b not congruent to 0 mod p.
+    for all b not congruent to 0 mod p. For a more detailed discussion, we invite the reader to consult Pollack-Weston 2009 section 2.
     """
     phi = E.modular_symbol(sign=1)
     deno = []
@@ -31,13 +32,14 @@ def mt_ec(E,p,n):
         else:
             deno.append(phi(b/(p^(n+1))).as_integer_ratio()[1])
             ans.append([b,phi(b/(p^(n+1)))])
-    #We then normalise the coefficients so that they lie in Z and have no common factor.
+    #We then normalise the coefficients so that they lie in Z and have no common factor. This normalization might not correspond to dividing by the
+    #cohomological period as in PW 2009 (definition 2.1) but it is used to make sure that mu = 0 which is the case of interest.
     scalefact = lcm(deno)
     coeff_list = []
     for elt in ans:
         elt[1] *= scalefact
         coeff_list.append(elt[1])
-    if gcd(coeff_list) == 1:
+    if gcd(coeff_list) == 1 or gcd(coeff_list) == 0:
         pass
     else:
         for elt in ans:
@@ -61,7 +63,7 @@ def mt_delta(p,n):
     ans = []
     deno = []
     for b in range(p^(n+1)):
-        if b % p ==0:
+        if b % p == 0:
             pass
         else:
             deno.append(mod_symb_delta(oo, b/(p^(n+1))).as_integer_ratio()[1])
@@ -88,25 +90,34 @@ def mt_to_poly(mt,p,n):
     Output:
     Let Lambda be the Iwasawa algebra obtained by taking the projective limit over n of Z_p[G_n] where G_n =  Gal(Q(mu_p^(n+1))/Q).
     We fix an isomorphism Lambda \cong Z_p[t]. Then, this function outputs a polynomial representing the projection of mt in Lambda/((1+t)^(p^n) - 1).
+    When p = 2, the calculations are a bit different (see our linked article for more details).
     """
     R,t = QQ['t'].objgen()
     poly_list = []
     poly = 0
 
-    for elt in mt:
-        omega_elt = list(Zp(p,10).teichmuller(elt[0]).expansion())
-        omega = omega_elt[0]
-        poly_list.append([elt[0]*omega.inverse_mod(p^n), elt[1]])
-
-    for elt in poly_list:
-        temp = True
-        m = 0
-        while temp:
-            if (1+p)^m % p^n == elt[0] % p^n:
-                temp = False
-            else:
-                m += 1
-        poly += elt[1]*(1+t)^m
+    if p == 2:
+        for elt in mt:
+            i = 0
+            while i <= p^(n-1):
+                if (5^i % p^(n+1) == elt[0] % p^(n+1)) or (-5^i % p^(n+1) == elt[0] % p^(n+1)):
+                    poly += elt[1]*(1+t)^i
+                    break
+                i += 1
+    else:
+        for elt in mt:
+            omega_elt = list(Zp(p,10).teichmuller(elt[0]).expansion())
+            omega = omega_elt[0]
+            poly_list.append([elt[0]*omega.inverse_mod(p^(n+1)), elt[1]])
+        for elt in poly_list:
+            temp = True
+            m = 0
+            while temp:
+                if (1+p)^m % p^(n+1) == elt[0] % p^(n+1):
+                    temp = False
+                else:
+                    m += 1
+            poly += elt[1]*(1+t)^m
     return poly
 
 def mu_inv(poly,p):
@@ -171,35 +182,37 @@ def lambda_inv_ss(poly,p,n):
     else:
         m = mu_inv(poly,p)
         coeff = poly.list()[0:poly.degree() + 1]
-        while True:
-            if all(x % p == 0 for x in coeff):
-                coeff[:] = [x / p for x in coeff]
-            else:
-                break
-        for i in range (len(coeff)):
+        for i in range(len(coeff)):
             if coeff[i].valuation(p) == m:
                 lambda_mt = i
                 break
             else:
                 pass
-        lambda_plus_minus = lambda_mt - q_n(p,n)
+        if p == 2:
+            lambda_plus_minus = lambda_mt - q_n(p,n-1)
+        else:
+            lambda_plus_minus = lambda_mt - q_n(p,n)
     return lambda_plus_minus
 
 def lambda_inv(poly,p):
     """
     Returns the p-adic lambda-invariant of a polynomial.
     """
-    coeff = poly.list()
-    while True:
-        if all(x % p == 0 for x in coeff):
-            coeff[:] = [x / p for x in coeff]
-        else:
-            break
-    for i in range(len(coeff) + 1):
-        if coeff[i].valuation(p) == 0:
-            return i
-        else:
-            pass
+    if poly == 0:
+        return oo
+
+    else:
+        coeff = poly.list()
+        while True:
+            if all(x % p == 0 for x in coeff):
+                coeff[:] = [x / p for x in coeff]
+            else:
+                break
+        for i in range(len(coeff) + 1):
+            if coeff[i].valuation(p) == 0:
+                return i
+            else:
+                pass
 
 def data_ec(E,p,n):
     """
@@ -212,22 +225,31 @@ def data_ec(E,p,n):
     print mt
     print
     print "Polynomial associated to theta_" + str(n) + " :"
-    poly = mt_to_poly(mt,p,n+1)
+    poly = mt_to_poly(mt,p,n)
     print poly
     print
     if E.is_ordinary(p):
-        print "Lambda-invariant: " + str(lambda_inv_ord(poly,p))
-        print "Mu-invariant: " + "0"
+        if p == 2:
+            print "Not implemented yet"
+        else:
+            print "Lambda-invariant: " + str(lambda_inv_ord(poly,p))
+            print "Mu-invariant: " + str(mu_inv(poly,p))
+            print
     elif E.is_supersingular(p):
+        #print "Lambda-invariant of the polynomial: " + str(lambda_inv(poly,p))
+        #print
         if (n + 1) % 2 == 0:
             print "Lambda^+: " + str(lambda_inv_ss(poly,p,n))
-            print "Mu^+: 0"
+            print "Mu^+: " + str(mu_inv(poly,p))
+            print
         else:
             print "Lambda^-: " + str(lambda_inv_ss(poly,p,n))
-            print "Mu^-: 0"
+            print "Mu^-: " + str(mu_inv(poly,p))
+            print
     else:
         print "Lambda: " + str(lambda_inv(poly,p))
-        print "Mu: 0"
+        print "Mu: " + str(mu_inv(poly,p))
+        print
 
 def data_delta(p,n):
     """
@@ -238,7 +260,7 @@ def data_delta(p,n):
     print mt
     print
     print "Polynomial associated to theta_" + str(n) + " :"
-    poly = mt_to_poly(mt,p,n+1)
+    poly = mt_to_poly(mt,p,n)
     print poly
     print
     print "Lambda-invariant: " + str(lambda_inv(poly,p))
@@ -260,7 +282,7 @@ def pot_red(E,p):
     while not(done) and i <= 4:
         m = list_deg[i]
         n = 0
-        while n <= 49:
+        while n <= 12:
             n += 1
             if (t^m - n*p).is_irreducible():
                 K = NumberField(x^m - n*p, "a")
@@ -281,14 +303,19 @@ def pot_red(E,p):
     print F.local_data(J)
     return (K, red)
 
-#Example of calculations
-p = 3
-E = CremonaDatabase().elliptic_curve("37a1")
-#print pot_red(E,p)
+#Calculation of the lambda-invariant of a p-adic Mazur-Tate element of level n associated to an elliptic curve
+#p = 3
+#n = 3
+#E = CremonaDatabase().elliptic_curve("27a1")
+#data_ec(E,p,n)
 
-data_ec(E,p,4)
-#data_delta(p,4)
-︡3251585c-7fe3-43ba-a830-ef95115642f9︡{"stdout":"Elliptic curve in the isogeny class  Elliptic curve isogeny class 37a\nLocal data at Principal ideal (3) of Integer Ring:\nReduction type: good\nLocal minimal model: Elliptic Curve defined by y^2 + y = x^3 - x over Rational Field\nMinimal discriminant valuation: 0\nConductor exponent: 0\nKodaira Symbol: I0\nTamagawa Number: 1\nMazur-Tate element of level 4:\n[[1, -1], [2, 0], [4, 0], [5, 1], [7, -1], [8, 0], [10, -1], [11, -1], [13, 1], [14, 0], [16, 0], [17, 0], [19, -1], [20, 0], [22, 0], [23, 0], [25, -2], [26, 0], [28, 1], [29, 0], [31, 2], [32, 1], [34, 0], [35, 1], [37, 1], [38, 0], [40, 1], [41, 0], [43, 1], [44, 1], [46, 1], [47, -1], [49, 1], [50, 3], [52, 1], [53, 2], [55, 0], [56, 0], [58, 0], [59, 0], [61, 0], [62, 0], [64, 0], [65, -1], [67, 0], [68, 1], [70, 0], [71, -1], [73, 0], [74, 0], [76, 1], [77, 0], [79, 1], [80, -1], [82, -1], [83, 0], [85, -1], [86, 0], [88, -1], [89, 0], [91, -1], [92, -1], [94, 0], [95, -1], [97, -1], [98, 0], [100, -2], [101, 1], [103, -1], [104, -1], [106, -3], [107, 0], [109, 0], [110, 0], [112, 0], [113, 0], [115, -1], [116, 1], [118, 1], [119, 0], [121, 1], [122, 1], [124, 0], [125, 1], [127, 1], [128, -1], [130, 0], [131, 0], [133, 0], [134, 0], [136, 0], [137, -3], [139, -1], [140, -1], [142, 1], [143, -2], [145, 0], [146, -1], [148, -1], [149, 0], [151, -1], [152, -1], [154, 0], [155, -1], [157, 0], [158, -1], [160, 0], [161, -1], [163, -1], [164, 1], [166, 0], [167, 1], [169, 0], [170, 0], [172, -1], [173, 0], [175, 1], [176, 0], [178, -1], [179, 0], [181, 0], [182, 0], [184, 0], [185, 0], [187, 0], [188, 0], [190, 2], [191, 1], [193, 3], [194, 1], [196, -1], [197, 1], [199, 1], [200, 1], [202, 0], [203, 1], [205, 0], [206, 1], [208, 1], [209, 0], [211, 1], [212, 2], [214, 0], [215, 1], [217, 0], [218, -2], [220, 0], [221, 0], [223, 0], [224, -1], [226, 0], [227, 0], [229, 0], [230, 1], [232, -1], [233, -1], [235, 0], [236, -1], [238, 1], [239, 0], [241, 0], [242, -1]]\n\nPolynomial associated to theta_4 :\nt^80 + 80*t^79 + 3159*t^78 + 82082*t^77 + 1578578*t^76 + 23964016*t^75 + 299076624*t^74 + 3155675537*t^73 + 28731965902*t^72 + 229276807723*t^71 + 1623262759245*t^70 + 10297483598600*t^69 + 59007012754709*t^68 + 307498442994706*t^67 + 1465662337376291*t^66 + 6421004088817149*t^65 + 25964890797838877*t^64 + 97271015576246982*t^63 + 338684352795401165*t^62 + 1099149508086944217*t^61 + 3333207772406109836*t^60 + 9466399183194091240*t^59 + 25228529318462955916*t^58 + 63206242848094415153*t^57 + 149102355211140317650*t^56 + 331657303825036711318*t^55 + 696522813926418587578*t^54 + 1382689318437272153460*t^53 + 2597216443277265422430*t^52 + 4620504455570116475314*t^51 + 7791630876890423595380*t^50 + 12463642958055051510019*t^49 + 18924392947138320478229*t^48 + 27290222203318224935237*t^47 + 37395156039890259898626*t^46 + 48711406020699006346087*t^45 + 60340256305433711763934*t^44 + 71100116390160523077494*t^43 + 79710933135996252364822*t^42 + 85039462132433023575660*t^41 + 86341982932081665686977*t^40 + 83433362298795160858034*t^39 + 76729856943813209214449*t^38 + 67152125942069003067388*t^37 + 55919374711682891354456*t^36 + 44297608997220499376656*t^35 + 33372812055324078442478*t^34 + 23902782585131237304843*t^33 + 16269107290698788150680*t^32 + 10517702917342882390244*t^31 + 6454546350557197291012*t^30 + 3757547213805444407377*t^29 + 2073482473936586871364*t^28 + 1083601811368169055204*t^27 + 535767983034657609402*t^26 + 250338638903907002948*t^25 + 110398881572053354149*t^24 + 45883377687618365439*t^23 + 17942572933012422852*t^22 + 6589330696567478397*t^21 + 2267786230212882366*t^20 + 729647405672099826*t^19 + 218858870906174862*t^18 + 61003917529895781*t^17 + 15742227793918401*t^16 + 3744343543385430*t^15 + 816598268322369*t^14 + 162260710839186*t^13 + 29147855179560*t^12 + 4687382518530*t^11 + 666299303784*t^10 + 82299360381*t^9 + 8620694577*t^8 + 737397075*t^7 + 48097260*t^6 + 2010672*t^5 + 10269*t^4 - 5733*t^3 - 486*t^2 - 18*t\n\nLambda^-: 5\nMu^-: 0\n"}︡{"done":true}
+#Calculation of the lambda-invariant of a p-adic Mazur-Tate element of level n associated to Delta
+#p = 3
+#n = 3
+#data_delta(p,n)
+
+#Calculation of the potential reduction of an elliptic curve
+#print pot_red(E,p)
 
 
 
