@@ -17,7 +17,7 @@ def modsymbdelta(r1, r2):
 def data_modsym_gens(N):
     """
     Prints a list of divisors that completely determine the image of a modular symbol of weight two for Gamma1(N) with values in any coefficient module.
-    This function is used in the calculations for the proof of Theorem 3.4 and Theorem 3.5.
+    This function is used in the calculations for the proof of Theorem 3.7 and Theorem 3.8.
     This function essentially uses the implementation of modular symbols of William Stein. From Stein's point of view, modular symbols lie in the homology
     of the upper-half plane relative to cusps. Our point of view uses cohomology, so our definitions of modular symbols are duals of each other.
 
@@ -51,7 +51,7 @@ def modsym_gens(N):
 
 def phi(N,D):
     """
-    Computes the values of the boundary symbols appearing in Theorem 3.4 and Theorem 3.5.
+    Computes the values of the boundary symbols appearing in Theorem 3.7 and Theorem 3.8.
     """
     assert N == 5 or N == 7 or N == 9, "N must be either 5,7 or 9, got: N = " + str(N)
     if N == 5:
@@ -64,29 +64,29 @@ def phi(N,D):
         dict9 = {"0" : 1, "2/27" : 3, "1/13" : 7, "1/12" : 1, "1/11" : 4, "1/10" : 1, "1/9" : 0, "1/8" : 1, "1/7" : 4, "4/27" : 6 , "1/6" : 7, "5/27" : 6, "1/5" : 7, "2/9" : 3, "1/4" : 7, "7/27" : 3, "8/27" : 0, "1/3" : 4, "10/27" : 0, "11/27" : 3, "5/12" : 1, "4/9" : 6, "13/27" : 6, "1/2" : 4, "5/9" : 6, "2/3" : 4, "7/9" : 3, "5/6" : 7, "8/9" : 0, "Infinity" : 0}
         return(dict9[str(Gamma1(27).reduce_cusp(D))])
 
-#Calculations of Theorem 3.4 for p = 5.
-#We verify that the projection alpha_5 varphi_Delta^+ agrees modulo 5 with the reduction mod 5 of the Eisenstein boundary symbol in Theorem 3.4.
+#Calculations of Theorem 3.7 for p = 5.
+#We verify that the projection alpha_5 varphi_Delta^+ agrees modulo 5 with the reduction mod 5 of the Eisenstein boundary symbol in Theorem 3.7.
 #To obtain 5-integral values for phi_Delta^+, one has to normalize it by 5 (see the discussion about the cohomological period).
 #We have c_5 = 2.
-print("Calculations of Theorem 3.4 for p = 5: ")
+print("Calculations of Theorem 3.7 for p = 5: ")
 data_modsym_gens(5)
 verif_list5 = [((modsymbdelta(elt[0], elt[1]) / 5) % 5) == (2 * (phi(5,elt[0]) - phi(5, elt[1]))) % 5 for elt in modsym_gens(5)]
 print(all(verif_list5))
 print()
 
 
-#Calculations of Theorem 3.4 for p = 7.
-#We verify that the projection alpha_7 varphi_Delta^+ agrees modulo 7 with the reduction mod 7 of the Eisenstein boundary symbol in Theorem 3.4.
+#Calculations of Theorem 3.7 for p = 7.
+#We verify that the projection alpha_7 varphi_Delta^+ agrees modulo 7 with the reduction mod 7 of the Eisenstein boundary symbol in Theorem 3.7.
 #The values of phi_Delta^+ are already 7-integral so one does not need any further normalization (see the discussion about the cohomological period).
 #We find c_7 = 1.
-print("Calculations of Theorem 3.4 for p = 7: ")
+print("Calculations of Theorem 3.7 for p = 7: ")
 data_modsym_gens(7)
 verif_list7 = [(modsymbdelta(elt[0], elt[1]) % 7) == (phi(7,elt[0]) - phi(7, elt[1])) % 7 for elt in modsym_gens(7)]
 print(all(verif_list7))
 print()
 
-#Calculations of Theorem 3.5 for p = 3.
-#We verify that the projection alpha_9 varphi_Delta^+ agrees modulo 9 with the reduction mod 9 of the boundary symbol in Theorem 3.5.
+#Calculations of Theorem 3.8 for p = 3.
+#We verify that the projection alpha_9 varphi_Delta^+ agrees modulo 9 with the reduction mod 9 of the boundary symbol in Theorem 3.8.
 #To obtain 3-integral values for phi_Delta^+, one has to normalize it by 81 (see the discussion about the cohomological period).
 print("Calculations of Theorem 3.5 for p = 3: ")
 data_modsym_gens(27)
