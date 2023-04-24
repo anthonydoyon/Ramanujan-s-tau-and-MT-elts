@@ -88,7 +88,7 @@ print()
 #Calculations of Theorem 3.8 for p = 3.
 #We verify that the projection alpha_9 varphi_Delta^+ agrees modulo 9 with the reduction mod 9 of the boundary symbol in Theorem 3.8.
 #To obtain 3-integral values for phi_Delta^+, one has to normalize it by 81 (see the discussion about the cohomological period).
-print("Calculations of Theorem 3.5 for p = 3: ")
+print("Calculations of Theorem 3.8 for p = 3: ")
 data_modsym_gens(27)
 verif_list9 = [((modsymbdelta(elt[0], elt[1]) / 81) % 9) == (phi(9,elt[0]) - phi(9, elt[1])) % 9 for elt in modsym_gens(27)]
 print(all(verif_list9))
