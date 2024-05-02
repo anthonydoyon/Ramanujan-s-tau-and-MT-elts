@@ -15,8 +15,8 @@ for g in v:
     print()
     print("Coset representative: \n" + str(g))
     if g[1][0] == 0:
-        print("p-valuations: " + str([w.dot_product(M.modular_symbol([j,Infinity,0]).element()).valuation(p)+binomial(10,j).valuation(p) for j in range(0,11,2)]))            #Computes the p-valuation of the modular symbols associated to Delta against every coset representative of Gamma_1(p^n).
+        print("p-valuations: " + str([w.dot_product(M.modular_symbol([j,Infinity,g[0][1]/g[1][1]]).element()).valuation(p)+binomial(10,j).valuation(p) for j in range(0,11,2)]))            #Computes the p-valuation of the modular symbols associated to Delta against every coset representative of Gamma_1(p^n).
     elif g[1][1] == 0:
         print("p-valuations: " + str([w.dot_product(M.modular_symbol([j,g[0][0]/g[1][0],Infinity]).element()).valuation(p)+binomial(10,j).valuation(p) for j in range(0,11,2)]))
     else:
-        print("p-valuations: " + str([w.dot_product(M.modular_symbol([j,g[0][0]/g[1][0],g[1][0]/g[1][1]]).element()).valuation(p)+binomial(10,j).valuation(p) for j in range(0,11,2)]))
+        print("p-valuations: " + str([w.dot_product(M.modular_symbol([j,g[0][0]/g[1][0],g[0][1]/g[1][1]]).element()).valuation(p)+binomial(10,j).valuation(p) for j in range(0,11,2)]))
